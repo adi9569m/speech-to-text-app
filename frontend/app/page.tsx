@@ -11,6 +11,37 @@ export default function Home() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
+  const sendAudioToBackend = async (audioFile: Blob | File) => {
+
+    const formData = new FormData();
+
+    formData.append(
+      "file",
+      audioFile,
+      "audio.webm"
+    );
+
+    try {
+
+      const response = await fetch(
+        "http://127.0.0.1:5000/transcribe",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const data = await response.json();
+
+      setTranscript(data.transcript);
+
+    } catch (error) {
+
+      console.error("Upload failed:", error);
+
+    }
+  };
+
   const startRecording = async () => {
 
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -37,33 +68,7 @@ export default function Home() {
 
       setAudioURL(url);
 
-      const formData = new FormData();
-
-      formData.append(
-        "file",
-        audioBlob,
-        "recording.webm"
-      );
-
-      try {
-
-        const response = await fetch(
-          "http://127.0.0.1:5000/transcribe",
-          {
-            method: "POST",
-            body: formData,
-          }
-        );
-
-        const data = await response.json();
-
-        setTranscript(data.transcript);
-
-      } catch (error) {
-
-        console.error("Upload failed:", error);
-
-      }
+      await sendAudioToBackend(audioBlob);
     };
 
     setIsRecording(true);
@@ -76,6 +81,21 @@ export default function Home() {
     mediaRecorderRef.current?.stop();
 
     setIsRecording(false);
+  };
+
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    const url = URL.createObjectURL(file);
+
+    setAudioURL(url);
+
+    await sendAudioToBackend(file);
   };
 
   return (
@@ -105,9 +125,24 @@ export default function Home() {
 
         </div>
 
+        <div className="mb-6">
+
+          <label className="block text-lg font-medium text-slate-700 mb-2">
+            Upload Audio File
+          </label>
+
+          <input
+            type="file"
+            accept="audio/*"
+            onChange={handleFileUpload}
+            className="block w-full border border-slate-300 rounded-lg p-2"
+          />
+
+        </div>
+
         {audioURL && (
           <audio controls className="w-full mb-6">
-            <source src={audioURL} type="audio/webm" />
+            <source src={audioURL} />
           </audio>
         )}
 
