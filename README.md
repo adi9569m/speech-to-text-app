@@ -1,2 +1,2 @@
 ## Progress
-Day 2 completed
+Day 3 completed
