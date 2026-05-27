@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
+import requests
 
 app = Flask(__name__)
 CORS(app)
@@ -8,6 +9,8 @@ CORS(app)
 UPLOAD_FOLDER = "uploads"
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+DEEPGRAM_API_KEY = "c1d25ff97bb64066aff2be3c7a904af946ff306e"
 
 @app.route("/")
 def home():
@@ -28,9 +31,23 @@ def transcribe():
 
     audio_file.save(file_path)
 
+    with open(file_path, "rb") as file:
+
+        response = requests.post(
+            "https://api.deepgram.com/v1/listen",
+            headers={
+                "Authorization": f"Token {DEEPGRAM_API_KEY}",
+                "Content-Type": "audio/webm"
+            },
+            data=file
+        )
+
+    result = response.json()
+
+    transcript = result["results"]["channels"][0]["alternatives"][0]["transcript"]
+
     return jsonify({
-        "message": "File received successfully",
-        "filename": audio_file.filename
+        "transcript": transcript
     })
 
 if __name__ == "__main__":
