@@ -6,7 +6,7 @@ Speech To Text Application is a full-stack web application that allows users to 
 
 The application also provides user authentication and transcript history storage, allowing users to securely access their previous transcripts.
 
----
+----
 
 ## Features
 
